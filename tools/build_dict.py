@@ -179,6 +179,8 @@ def main(src, out):
     db.executescript(
         """
         CREATE INDEX entry_key ON entry(lang, key);
+        -- Chargement des expressions au démarrage : sans lui, ~100 s dans le WebView.
+        CREATE INDEX entry_multi ON entry(lang, key) WHERE multi=1;
         CREATE INDEX trans_e ON trans(entry_id);
         CREATE INDEX trans_w ON trans(lang, word);
         CREATE INDEX etym_e ON etym(entry_id);

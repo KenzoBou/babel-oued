@@ -21,9 +21,45 @@ function all(sql: string, bind: unknown[] = []): any[] {
   return db.selectObjects(sql, bind);
 }
 
+// Un seul contexte à la fois peut ouvrir les fichiers de la base (OPFS « access handles » exclusifs).
+// Après un rechargement de la page, l'ancien worker peut encore les tenir quelques instants :
+// le verrou fait attendre le nouveau jusqu'à ce que l'ancien soit vraiment terminé.
+const LOCK = 'babel-oued-dict';
+let locked: Promise<void> | null = null;
+function acquireLock(): Promise<void> {
+  if (!navigator.locks) return Promise.resolve();
+  return (locked ??= new Promise<void>((resolve, reject) => {
+    navigator.locks
+      .request(LOCK, { signal: AbortSignal.timeout(20000) }, () => {
+        resolve();
+        return new Promise<never>(() => {}); // gardé jusqu'à la fin du worker
+      })
+      .catch((e: Error) => {
+        locked = null;
+        reject(e.name === 'AbortError' || e.name === 'TimeoutError'
+          ? new Error('Le dictionnaire est déjà ouvert dans un autre onglet de l’application. Ferme-le, puis recharge la page.')
+          : e);
+      });
+  }));
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+async function installPool(sqlite3: any) {
+  for (let i = 0; ; i++) {
+    try {
+      return await sqlite3.installOpfsSAHPoolVfs({ name: 'babel-oued', forceReinitIfPreviouslyFailed: true });
+    } catch (e) {
+      // Fichiers encore tenus par un contexte en train de se fermer : on laisse le temps de les libérer.
+      if (i >= 5 || !/Access Handle|NoModificationAllowed|InvalidState/i.test(String((e as Error)?.message ?? e) + (e as Error)?.name)) throw e;
+      await sleep(500 * (i + 1));
+    }
+  }
+}
+
 async function open() {
+  await acquireLock();
   const sqlite3 = await sqlite3InitModule();
-  const pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'babel-oued' });
+  const pool = await installPool(sqlite3);
   const have = pool.getFileNames().includes(DB_NAME);
   // Version du dictionnaire fourni dans l'APK : s'il change, on le réinstalle.
   const DICT_VERSION = (await fetch('/dict.version').then((r) => (r.ok ? r.text() : '')).catch(() => '')).trim() || 'dict-v1';
@@ -78,6 +114,9 @@ function toks(s: string): string[] {
 }
 
 function loadIdioms() {
+  // Index partiel (créé par build_dict.py ; ajouté ici une fois pour les bases plus anciennes) :
+  // sans lui, cette requête lit toute la table et prend plus d'une minute dans le WebView.
+  db.exec('CREATE INDEX IF NOT EXISTS entry_multi ON entry(lang, key) WHERE multi=1');
   const rows = all("SELECT id, key FROM entry WHERE lang='fr' AND multi=1");
   idioms = [];
   idiomsByTok = new Map();
