@@ -1,10 +1,11 @@
 node_modules/
 dist/
 build/
-public/dict.sqlite.gz
+public/dict.pack
 android/app/build/
 android/.gradle/
 android/build/
 *.keystore
 !android/app/babel.keystore
 public/dict.version
+public/ort/

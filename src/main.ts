@@ -33,6 +33,7 @@ interface Card { text: string; source: 'opus' | 'gemini' | 'corrige'; verdict?: 
 let current: { fr: string; id: number; cards: Partial<Record<LangCode, Card>>; notes?: string } | null = null;
 let modelsReady = false;
 let dictReady = false;
+let dictError = '';
 
 // ---------- DOM ----------
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -102,7 +103,7 @@ function renderSetup() {
   el.innerHTML = `<b>Préparation hors ligne</b>
     <p>${modelsReady ? '✅ Modèles de traduction prêts' : `Téléchargement des modèles de traduction (une seule fois, Wi-Fi conseillé) : ${mb(loaded)} / ${total ? mb(total) : '~550'} Mo`}</p>
     <progress max="1" value="${modelsReady ? 1 : total ? loaded / total : 0}"></progress>
-    <p>${dictReady ? '✅ Dictionnaire prêt' : `Installation du dictionnaire : ${dictProg.total ? Math.round((100 * dictProg.loaded) / dictProg.total) : 0} %`}</p>`;
+    <p>${dictReady ? '✅ Dictionnaire prêt' : dictError ? `❌ Dictionnaire : ${dictError}` : `Installation du dictionnaire (une seule fois) : ${dictProg.total ? `${Math.round((100 * dictProg.loaded) / dictProg.total)} %` : `${mb(dictProg.loaded)} Mo`}`}</p>`;
 }
 function setDictProgress(loaded: number, total: number) {
   dictProg = { loaded, total };
@@ -391,5 +392,5 @@ refreshNet();
 renderSetup();
 navigator.storage?.persist?.().catch(() => {});
 tr.postMessage({ type: 'init' });
-dictCall({ type: 'init' }).then(() => { dictReady = true; renderSetup(); }).catch((e) => { toast(e.message); });
+dictCall({ type: 'init' }).then(() => { dictReady = true; renderSetup(); }).catch((e) => { dictError = e.message; renderSetup(); });
 get('history').then((l) => renderHistory(l ?? [])).catch(() => {});

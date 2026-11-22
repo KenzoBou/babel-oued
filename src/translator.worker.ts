@@ -5,7 +5,8 @@ import { LANGS, type LangCode } from './langs';
 
 env.allowLocalModels = false;
 env.useBrowserCache = true; // les modèles restent dans le Cache Storage → hors ligne ensuite
-// Note : Vite intègre le fichier WebAssembly d'ONNX Runtime dans l'application (pas de CDN).
+// Fichiers WebAssembly d'ONNX Runtime servis par l'application (sinon : CDN → pas de hors-ligne).
+if (env.backends.onnx.wasm) env.backends.onnx.wasm.wasmPaths = `${self.location.origin}/ort/`;
 
 const pipes = new Map<LangCode, TranslationPipeline>();
 let loading: Promise<void> | null = null;

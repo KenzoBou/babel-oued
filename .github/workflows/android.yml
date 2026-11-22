@@ -47,7 +47,7 @@ jobs:
         run: |
           npm ci
           mkdir -p public
-          cp build/dict.sqlite.gz public/dict.sqlite.gz
+          cp build/dict.sqlite.gz public/dict.pack
           echo "${{ hashFiles('tools/build_dict.py') }}-${{ steps.month.outputs.month }}" > public/dict.version
           npm run build
           npx cap sync android

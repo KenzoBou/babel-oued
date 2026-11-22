@@ -37,7 +37,7 @@ async function open() {
   }
   if (!have || version !== DICT_VERSION) {
     // Première ouverture : le dictionnaire compressé est fourni dans l'APK.
-    const res = await fetch('/dict.sqlite.gz');
+    const res = await fetch('/dict.pack');
     if (!res.ok || !res.body) throw new Error('Dictionnaire introuvable dans l’application');
     const total = Number(res.headers.get('content-length')) || 0;
     let loaded = 0;
@@ -51,17 +51,21 @@ async function open() {
       }),
     );
     const reader = counted.pipeThrough(new DecompressionStream('gzip') as unknown as TransformStream<Uint8Array, Uint8Array>).getReader();
+    const t0 = performance.now();
     await pool.importDb(DB_NAME, async () => {
       const { value, done } = await reader.read();
       return done ? undefined : value;
     });
+    console.info(`[dict] import ${Math.round(performance.now() - t0)} ms`);
     const w = new pool.OpfsSAHPoolDb(DB_NAME);
     w.exec("CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT)");
     w.exec({ sql: "INSERT OR REPLACE INTO meta VALUES('version', ?)", bind: [DICT_VERSION] });
     w.close();
   }
   db = new pool.OpfsSAHPoolDb(DB_NAME);
+  const t1 = performance.now();
   loadIdioms();
+  console.info(`[dict] ${idioms.length} expressions chargées en ${Math.round(performance.now() - t1)} ms`);
 }
 
 // ---------- Expressions ----------
