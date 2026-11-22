@@ -1,0 +1,23 @@
+{
+  "name": "babel-oued",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "@huggingface/transformers": "4.3.2",
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
+    "idb-keyval": "6.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.8"
+  }
+}

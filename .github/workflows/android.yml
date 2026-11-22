@@ -1,0 +1,73 @@
+name: APK Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Mois courant
+        id: month
+        run: echo "month=$(date +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Dictionnaire (cache, reconstruit chaque mois)
+        id: dict-cache
+        uses: actions/cache@v4
+        with:
+          path: build/dict.sqlite.gz
+          key: dict-${{ hashFiles('tools/build_dict.py') }}-${{ steps.month.outputs.month }}
+
+      - name: Construire le dictionnaire (Wiktionnaire via kaikki.org)
+        if: steps.dict-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p data build
+          for l in Français Anglais Espagnol Allemand Italien Russe; do
+            u=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$l")
+            curl -sSfL -o "data/$l.jsonl" "https://kaikki.org/frwiktionary/$u/kaikki.org-dictionary-$u.jsonl" &
+          done
+          wait
+          python3 tools/build_dict.py data build/dict.sqlite
+          gzip -6 -c build/dict.sqlite > build/dict.sqlite.gz
+          ls -la build
+
+      - name: Application web
+        run: |
+          npm ci
+          mkdir -p public
+          cp build/dict.sqlite.gz public/dict.sqlite.gz
+          echo "${{ hashFiles('tools/build_dict.py') }}-${{ steps.month.outputs.month }}" > public/dict.version
+          npm run build
+          npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk ../babel-oued.apk
+
+      - name: Publier dans les Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v0.1.${{ github.run_number }}" babel-oued.apk \
+            --title "Babel-Oued 0.1.${{ github.run_number }}" \
+            --notes "APK à installer sur le téléphone (commit ${GITHUB_SHA::7})."

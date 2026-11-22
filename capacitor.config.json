@@ -1,0 +1,6 @@
+{
+  "appId": "fr.babeloued.app",
+  "appName": "Babel-Oued",
+  "webDir": "dist",
+  "android": { "allowMixedContent": false }
+}

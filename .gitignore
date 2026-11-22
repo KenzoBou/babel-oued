@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+public/dict.sqlite.gz
+android/app/build/
+android/.gradle/
+android/build/
+*.keystore
+!android/app/babel.keystore
+public/dict.version
