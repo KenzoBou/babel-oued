@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "postinstall": "node scripts/copy-ort.mjs"
+    "postinstall": "node scripts/copy-ort.mjs",
+    "dict": "node tools/get_dict.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",
