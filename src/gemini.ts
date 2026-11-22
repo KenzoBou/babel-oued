@@ -1,4 +1,4 @@
-// Fonctions en ligne : Gemini, puis Mistral et Groq en secours (offres gratuites).
+// Fonctions en ligne : Gemini, puis Mistral, Groq et OpenRouter en secours (offres gratuites).
 // Les clés restent sur le téléphone.
 import { get, set } from 'idb-keyval';
 import { LANGS, NAME, type AnyLang, type LangCode } from './langs';
@@ -9,6 +9,7 @@ export interface Settings {
   /** Secours si Gemini est saturé ou à court de quota (facultatifs). */
   mistralKey: string;
   groqKey: string;
+  openrouterKey: string;
   /** Vérifier en ligne automatiquement quand seule la traduction hors ligne est disponible. */
   autoVerify: boolean;
 }
@@ -19,11 +20,11 @@ export function loadSettings(): Settings {
     const s = JSON.parse(localStorage.getItem('settings') || '{}');
     return {
       geminiKey: s.geminiKey || '', model: s.model || DEFAULT_MODEL,
-      mistralKey: s.mistralKey || '', groqKey: s.groqKey || '',
+      mistralKey: s.mistralKey || '', groqKey: s.groqKey || '', openrouterKey: s.openrouterKey || '',
       autoVerify: s.autoVerify !== false,
     };
   } catch {
-    return { geminiKey: '', model: DEFAULT_MODEL, mistralKey: '', groqKey: '', autoVerify: true };
+    return { geminiKey: '', model: DEFAULT_MODEL, mistralKey: '', groqKey: '', openrouterKey: '', autoVerify: true };
   }
 }
 export function saveSettings(s: Settings) {
@@ -31,7 +32,7 @@ export function saveSettings(s: Settings) {
 }
 export function hasAnyKey() {
   const s = loadSettings();
-  return !!(s.geminiKey || s.mistralKey || s.groqKey);
+  return !!(s.geminiKey || s.mistralKey || s.groqKey || s.openrouterKey);
 }
 export function onlineAvailable() {
   return navigator.onLine && hasAnyKey();
@@ -101,12 +102,22 @@ function toJsonSchema(x: any): any {
   return o;
 }
 
-/** API compatibles OpenAI (Mistral, Groq) : mode JSON, schéma rappelé dans la consigne. */
+/** API compatibles OpenAI (Mistral, Groq, OpenRouter) : mode JSON, schéma rappelé dans la consigne. */
 const COMPAT = {
-  mistral: { name: 'Mistral', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest' },
-  groq: { name: 'Groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b' },
+  mistral: { name: 'Mistral', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', headers: {} },
+  groq: { name: 'Groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', headers: {} },
+  // « openrouter/free » choisit lui-même un modèle gratuit disponible (la liste change souvent).
+  openrouter: { name: 'OpenRouter', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'openrouter/free', headers: { 'X-Title': 'Babel-Oued' } },
 };
-async function viaCompat(p: (typeof COMPAT)[keyof typeof COMPAT], key: string, prompt: string, schema: any): Promise<string> {
+type Compat = (typeof COMPAT)[keyof typeof COMPAT];
+
+/** Certains modèles entourent le JSON de texte ou de ```json : on garde l'objet seul. */
+function extractJson(text: string): string {
+  const a = text.indexOf('{');
+  const b = text.lastIndexOf('}');
+  return a >= 0 && b > a ? text.slice(a, b + 1) : text;
+}
+async function viaCompat(p: Compat, key: string, prompt: string, schema: any): Promise<string> {
   const content = `${prompt}
 
 Réponds uniquement avec un objet JSON valide, conforme à ce JSON Schema (tous les champs sont obligatoires) :
@@ -117,7 +128,7 @@ ${JSON.stringify(toJsonSchema(schema))}`;
     try {
       res = await fetch(p.url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}`, ...p.headers },
         signal: AbortSignal.timeout(TIMEOUT_MS + 8000),
         body: JSON.stringify({
           model: p.model,
@@ -135,7 +146,7 @@ ${JSON.stringify(toJsonSchema(schema))}`;
   if (!res) throw new ProviderError(`${p.name} ne répond pas`);
   if (!res.ok) throw new ProviderError(`${p.name} : erreur ${res.status}`, res.status);
   const data = await res.json();
-  return data?.choices?.[0]?.message?.content ?? '';
+  return extractJson(data?.choices?.[0]?.message?.content ?? '');
 }
 
 /** Interroge les fournisseurs configurés dans l'ordre, jusqu'au premier qui répond. */
@@ -147,7 +158,8 @@ async function call<T>(prompt: string, schema: any, cacheKey: string): Promise<T
   if (s.geminiKey) tries.push(['Gemini', () => viaGemini(s.geminiKey, s.model, prompt, schema)]);
   if (s.mistralKey) tries.push(['Mistral', () => viaCompat(COMPAT.mistral, s.mistralKey, prompt, schema)]);
   if (s.groqKey) tries.push(['Groq', () => viaCompat(COMPAT.groq, s.groqKey, prompt, schema)]);
-  if (!tries.length) throw new Error('Ajoute une clé (Gemini, Mistral ou Groq) dans les réglages.');
+  if (s.openrouterKey) tries.push(['OpenRouter', () => viaCompat(COMPAT.openrouter, s.openrouterKey, prompt, schema)]);
+  if (!tries.length) throw new Error('Ajoute une clé d’IA (Gemini, Mistral, Groq ou OpenRouter) dans les réglages.');
   const errors: ProviderError[] = [];
   for (const [name, run] of tries) {
     try {
@@ -161,7 +173,7 @@ async function call<T>(prompt: string, schema: any, cacheKey: string): Promise<T
   const st = errors.map((e) => e.status);
   if (st.some((x) => x === 400 || x === 401 || x === 403)) throw new Error(`Clé ou modèle refusé (${errors.map((e) => e.message).join(' ; ')}). Vérifie les réglages.`);
   if (st.every((x) => x === 429)) throw new Error('Quota gratuit atteint partout pour le moment, réessaie plus tard.');
-  const hint = tries.length === 1 ? ' Ajoute une clé Mistral ou Groq dans les réglages pour avoir un secours.' : '';
+  const hint = tries.length === 1 ? ' Ajoute une clé Mistral, Groq ou OpenRouter dans les réglages pour avoir un secours.' : '';
   throw new Error(`Aucun service d’IA disponible en ce moment (${errors.map((e) => e.message).join(' ; ')}). Réessaie dans une minute.${hint}`);
 }
 

@@ -7,7 +7,7 @@ mots apparentés dans les autres langues).
 - **Hors ligne** : modèles Opus-MT (transformers.js) + dictionnaire tiré du Wiktionnaire (SQLite).
 - **En ligne** (clé Gemini gratuite) : traduction idiomatique, traduction en situation, origine d'une phrase,
   explication de chaque mot dans sa phrase avec questions de suivi, vérification automatique.
-  Clés Mistral ou Groq facultatives : prises en secours quand Gemini est saturé.
+  Clés Mistral, Groq ou OpenRouter facultatives : prises en secours quand Gemini est saturé.
 
 ## Installer sur le téléphone
 

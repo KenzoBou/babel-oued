@@ -108,14 +108,18 @@ document.querySelector('#app')!.innerHTML = `
       Sur l’offre gratuite, Google peut utiliser les phrases envoyées pour améliorer ses modèles.</p>
       <label>Modèle Gemini <input id="model" placeholder="${DEFAULT_MODEL}"></label>
       <h3>Secours si Gemini est saturé (facultatif)</h3>
-      <label>Clé API Mistral (gratuite)
+      <label>Clé API Mistral
         <input id="mistral-key" type="password" autocomplete="off">
       </label>
-      <p class="hint">Sur <b>console.mistral.ai</b> → API Keys (offre gratuite par défaut ; vérification par téléphone). Les requêtes gratuites peuvent servir à entraîner leurs modèles.</p>
+      <p class="hint">Sur <b>console.mistral.ai</b>. Depuis fin 2026, les nouveaux comptes gratuits n’ont plus de clé API : il faut des crédits payants. Facultatif.</p>
       <label>Clé API Groq (gratuite)
         <input id="groq-key" type="password" autocomplete="off" placeholder="gsk_…">
       </label>
-      <p class="hint">Sur <b>console.groq.com/keys</b>. Utilisée seulement si Gemini et Mistral échouent.</p>
+      <p class="hint">Sur <b>console.groq.com/keys</b>, sans carte bancaire.</p>
+      <label>Clé API OpenRouter (gratuite)
+        <input id="openrouter-key" type="password" autocomplete="off" placeholder="sk-or-…">
+      </label>
+      <p class="hint">Sur <b>openrouter.ai/keys</b>. Modèles gratuits, environ 50 requêtes par jour : utilisée en dernier recours.</p>
       <label>Thème
         <select id="theme"><option value="light">Clair</option><option value="dark">Sombre</option><option value="auto">Comme le téléphone</option></select>
       </label>
@@ -366,7 +370,7 @@ async function openWord(word: string, lang: AnyLang, sentence: string, original:
   if (onlineAvailable()) {
     const explained = explainInSheet(word, lang, sentence, original, lookup, ctx, on);
     box.append(followUp(word, lang, sentence, original, explained));
-  } else on.append(h('p', 'muted', navigator.onLine ? 'Ajoute une clé d’IA (Gemini, Mistral ou Groq) dans les réglages pour l’explication grammaticale détaillée.' : 'Explication détaillée disponible quand tu seras en ligne.'));
+  } else on.append(h('p', 'muted', navigator.onLine ? 'Ajoute une clé d’IA (Gemini, Mistral, Groq ou OpenRouter) dans les réglages pour l’explication grammaticale détaillée.' : 'Explication détaillée disponible quand tu seras en ligne.'));
 
   try {
     const d = await lookup;
@@ -532,6 +536,7 @@ $('#btn-settings').onclick = () => {
   ($('#key') as HTMLInputElement).value = s.geminiKey;
   ($('#mistral-key') as HTMLInputElement).value = s.mistralKey;
   ($('#groq-key') as HTMLInputElement).value = s.groqKey;
+  ($('#openrouter-key') as HTMLInputElement).value = s.openrouterKey;
   ($('#model') as HTMLInputElement).value = s.model === DEFAULT_MODEL ? '' : s.model;
   ($('#autoverify') as HTMLInputElement).checked = s.autoVerify;
   ($('#theme') as HTMLSelectElement).value = localStorage.getItem('theme') ?? 'light';
@@ -542,6 +547,7 @@ $('#save').onclick = () => {
     geminiKey: ($('#key') as HTMLInputElement).value.trim(),
     mistralKey: ($('#mistral-key') as HTMLInputElement).value.trim(),
     groqKey: ($('#groq-key') as HTMLInputElement).value.trim(),
+    openrouterKey: ($('#openrouter-key') as HTMLInputElement).value.trim(),
     model: ($('#model') as HTMLInputElement).value.trim() || DEFAULT_MODEL,
     autoVerify: ($('#autoverify') as HTMLInputElement).checked,
   });
@@ -576,7 +582,7 @@ async function translateContext(request: string) {
   const out = $('#ctx-result');
   if (!onlineAvailable()) {
     status.hidden = false;
-    status.textContent = navigator.onLine ? 'Ajoute une clé d’IA (Gemini, Mistral ou Groq) dans les réglages pour utiliser cet onglet.' : 'Cet onglet a besoin du réseau.';
+    status.textContent = navigator.onLine ? 'Ajoute une clé d’IA (Gemini, Mistral, Groq ou OpenRouter) dans les réglages pour utiliser cet onglet.' : 'Cet onglet a besoin du réseau.';
     return;
   }
   ctxBusy = true;
@@ -636,7 +642,7 @@ async function explainPhrase(phrase: string) {
   out.innerHTML = '';
   status.hidden = false;
   if (!onlineAvailable()) {
-    status.textContent = navigator.onLine ? 'Ajoute une clé d’IA (Gemini, Mistral ou Groq) dans les réglages pour utiliser cet onglet.' : 'Cet onglet a besoin du réseau.';
+    status.textContent = navigator.onLine ? 'Ajoute une clé d’IA (Gemini, Mistral, Groq ou OpenRouter) dans les réglages pour utiliser cet onglet.' : 'Cet onglet a besoin du réseau.';
     return;
   }
   orBusy = true;
