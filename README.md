@@ -8,6 +8,8 @@ mots apparentés dans les autres langues).
 - **En ligne** (clé Gemini gratuite) : traduction idiomatique, traduction en situation, origine d'une phrase,
   explication de chaque mot dans sa phrase avec questions de suivi, vérification automatique.
   Clés Mistral, Groq ou OpenRouter facultatives : prises en secours quand Gemini est saturé.
+- **Carnet** (hors ligne) : mots et expressions enregistrés, classés par langue, révisés en flashcards
+  (thème ou version) avec répétition espacée. Mode quiz dans l'onglet Traduire.
 
 ## Installer sur le téléphone
 

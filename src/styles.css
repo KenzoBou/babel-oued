@@ -141,3 +141,68 @@ dialog::backdrop { background: rgb(5 10 25 / .45); }
 .row { display: flex; justify-content: flex-end; gap: 8px; }
 
 .toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); background: var(--fg); color: var(--bg); padding: 12px 14px; border-radius: var(--radius); font-size: .9rem; z-index: 20; }
+
+/* Onglet Traduire : interrupteur quiz */
+.form-row { display: flex; gap: 10px; align-items: stretch; }
+.form-row #go { flex: 1; }
+.switch { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--card); font-size: .85rem; font-weight: 600; color: var(--muted); cursor: pointer; user-select: none; }
+.switch input { appearance: none; width: 34px; height: 20px; padding: 0; margin: 0; border: 0; border-radius: 99px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.switch input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .25); transition: transform .15s; }
+.switch input:checked { background: var(--accent); }
+.switch input:checked::after { transform: translateX(14px); }
+.switch input:focus { box-shadow: none; }
+.switch:has(input:checked) { color: var(--accent); border-color: var(--accent); }
+
+/* Pastille du nombre de cartes à réviser */
+.tabs button { position: relative; }
+.tab-badge { position: absolute; top: 2px; left: calc(50% + 8px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--ko); color: #fff; font-size: .65rem; line-height: 18px; text-align: center; }
+
+/* Étoile « ajouter au carnet » */
+.star { font-size: 1.15rem !important; padding: 2px 4px !important; color: var(--muted) !important; line-height: 1; }
+.star.on { color: var(--l-es) !important; }
+.source .star { margin-left: auto; }
+.sheet-title { display: flex; align-items: center; gap: 10px; padding-right: 36px; }
+.sheet-title h2 { flex: 1; }
+.save-word { white-space: nowrap; }
+.save-form { display: flex; flex-direction: column; gap: 8px; }
+.save-form input { padding: 10px 12px; }
+
+/* Carnet */
+.seg { display: flex; gap: 4px; padding: 4px; background: var(--soft); border-radius: calc(var(--radius) + 2px); margin-bottom: 12px; }
+.seg button { flex: 1; padding: 9px 8px; background: transparent; color: var(--muted); font-size: .9rem; border-radius: 11px; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgb(0 0 0 / .08); }
+.seg.small button { font-size: .8rem; padding: 7px 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.chip { padding: 6px 12px; border-radius: 99px; background: var(--card); color: var(--fg); border: 1.5px solid var(--line); font-size: .85rem; font-weight: 600; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip small { color: var(--muted); font-weight: 500; margin-right: 2px; }
+.add summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+#cn-add-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+#cn-add-form input, #cn-add-form select { padding: 10px 12px; }
+.cn-group { font-size: .95rem; margin: 18px 0 4px; }
+.saved { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; }
+.saved-main { flex: 1; min-width: 0; }
+.saved .text { font-size: 1.1rem; margin: 2px 0; }
+.saved-fr { margin: 0; color: var(--muted); font-size: .9rem; cursor: pointer; }
+.saved-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.del { font-size: .95rem !important; color: var(--muted) !important; padding: 2px 4px !important; }
+.lvl { font-size: .55rem; letter-spacing: 1px; color: var(--accent); white-space: nowrap; }
+.empty { color: var(--muted); text-align: center; padding: 24px 12px; }
+.rv-start { text-align: center; padding: 20px 8px; }
+.rv-start p { margin: 4px 0; }
+.rv-start button { margin-top: 14px; min-width: 200px; }
+.rv-big { font-size: 2.6rem; font-weight: 700; color: var(--accent); }
+.flash { min-height: 210px; display: flex; flex-direction: column; cursor: pointer; padding: 14px 16px 18px; }
+.flash.flipped { cursor: default; }
+.flash-q { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin: 18px 0 8px; text-align: center; }
+.flash-hint { margin-top: auto; text-align: center; color: var(--muted); font-size: .85rem; }
+.flash-a { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 8px; text-align: center; }
+.flash-a .text { font-size: 1.3rem; }
+.flash-btns { display: flex; gap: 10px; }
+.flash-btns button { flex: 1; }
+.flash-btns .ko { background: color-mix(in srgb, var(--ko) 14%, var(--card)); color: var(--ko); }
+.flash-btns .ok { background: color-mix(in srgb, var(--ok) 16%, var(--card)); color: var(--ok); }
+button.link { display: block; margin: 14px auto 0; background: none; color: var(--muted); font-weight: 500; font-size: .85rem; padding: 6px; text-decoration: underline; }
+.toast { display: flex; align-items: center; gap: 12px; }
+.toast span { flex: 1; }
+.toast-action { background: none; color: var(--accent-soft); padding: 4px 6px; font-size: .9rem; text-decoration: underline; }

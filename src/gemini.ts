@@ -228,6 +228,10 @@ export interface Explanation {
   /** Erreur qu'un francophone ferait naturellement, et pourquoi elle est fausse ; vide si aucune. */
   piege: string;
   lemme: string;
+  /** Traduction française courte du lemme, dans le sens de la phrase. */
+  sens_mot: string;
+  /** Traduction française courte du groupe de mots. */
+  sens_groupe: string;
   nature: string;
   role: string;
   racine: string;
@@ -244,14 +248,16 @@ Réponds en français, de façon concise et exacte. Le plus important est d'expl
 - construction : 2 à 4 phrases. Explique pourquoi la phrase est construite ainsi : qui est le sujet, quel auxiliaire et pourquoi, avec quoi s'accorde le participe, quel cas ou quelle préposition est régi, en comparant explicitement avec la construction française de la phrase originale quand elle diffère.
 - piege : la forme qu'un francophone dirait par calque du français (ex. « mi hai mancata ») et pourquoi elle est fausse, en une ou deux phrases ; vide si le calque du français serait correct.
 - lemme : forme de dictionnaire du mot.
+- sens_mot : traduction française courte du lemme, dans le sens qu'il a ici (ex. « manquer »).
+- sens_groupe : traduction française courte et naturelle du groupe (ex. « tu m'as manqué »).
 - nature : nature grammaticale et forme précise (genre, nombre, cas, temps, mode, personne...).
 - role : POURQUOI ce mot et cette forme sont là dans CETTE phrase (fonction, règle de grammaire, accord, cas régi, choix idiomatique) ; 1 à 3 phrases.
 - racine : étymologie (racine latine, grecque, germanique, slave...). Si tu n'es pas sûr, dis-le plutôt que d'inventer.
 - liens : 3 à 6 mots apparentés ou équivalents dans mes autres langues (fr, en, es, de, it, ru, hors ${NAME[lang]}), en écriture originale (cyrillique pour le russe, avec translittération entre parenthèses), avec une note courte : même racine (cognat) ou simple équivalent, faux ami éventuel.`;
   return call<Explanation>(
     prompt,
-    S({ groupe: STR, construction: STR, piege: STR, lemme: STR, nature: STR, role: STR, racine: STR, liens: { type: 'ARRAY', items: S({ lang: STR, mot: STR, note: STR }) } }),
-    `ex:v2:${lang}:${word}:${sentence}`,
+    S({ groupe: STR, construction: STR, piege: STR, lemme: STR, sens_mot: STR, sens_groupe: STR, nature: STR, role: STR, racine: STR, liens: { type: 'ARRAY', items: S({ lang: STR, mot: STR, note: STR }) } }),
+    `ex:v3:${lang}:${word}:${sentence}`,
   );
 }
 
